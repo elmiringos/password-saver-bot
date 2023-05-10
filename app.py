@@ -63,7 +63,7 @@ async def get_command(message: types.Message, state: FSMContext):
         else:
             chat_id = message.chat.id
             msg_id = message["message_id"]
-            task = create_task.delay(chat_id, msg_id, 2)
+            create_task.delay(chat_id, msg_id, 2)
             await message.reply(data)
     await state.finish()
 
