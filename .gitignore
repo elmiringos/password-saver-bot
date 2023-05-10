@@ -1,6 +1,0 @@
-﻿.env
-.vscode
-Pipfile
-Pipfile.lock
-private.pem
-public.pem
