@@ -12,7 +12,8 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from dotenv import load_dotenv
 from db.db import get_password, insert_password, delete_password, add_user, check_user 
-from worker import create_task
+from worker import delete_message
+import asyncio
 
 load_dotenv()
 
@@ -61,10 +62,8 @@ async def get_command(message: types.Message, state: FSMContext):
         if not data :
             await message.reply("Нет сохраненных паролей для данного сервиса")
         else:
-            chat_id = message.chat.id
-            msg_id = message["message_id"]
-            create_task.delay(chat_id, msg_id, 2)
-            await message.reply(data)
+            msg = await message.reply(data)
+            asyncio.create_task(delete_message(msg, 60))
     await state.finish()
 
 
@@ -86,20 +85,21 @@ async def login_set_command(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['login'] = message.text
     await SetForm.next()
-    await message.reply('Напишите пароль')
+    await message.reply('Напишите пароль, сообщение с паролем удалится через 30 сек')
 
 @dp.message_handler(state=SetForm.password)
 async def password_command(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['password'] = message.text
+        asyncio.create_task(delete_message(message, 60))
         user_id = message.from_user.id
         insert_password(user_id, data['service'], data['login'], data['password'])
-        print(data)
+        print(data['service'], data['login'])
         await message.reply('Пароль создан')
     await state.finish()
 
 
-#det password
+#del password
 @dp.message_handler(commands=['del'], state=None)
 async def start_del_command(message: types.Message):
     await DelForm.service.set()
@@ -116,6 +116,7 @@ async def del_command(message: types.Message, state: FSMContext):
         else:
             await message.reply("Нет сохраненных паролей для данного сервиса")
     await state.finish()
+
 
 if __name__ == '__main__':
     executor.start_polling(dp)
