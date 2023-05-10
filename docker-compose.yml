@@ -1,14 +1,11 @@
-﻿version: "3"
+version: "3"
 
 services:
-	app:
+  app:
     build: .
-    container_name: bot
-    command: python app.py
-    ports:
-      - 80:80
-    volumes:
-      - ./:/app
-		
-		env_file:
-			.env.exapmle
+      container_name: bot
+      command: python app.py
+      volumes:
+        - ./:/app
+      env_file:
+        .env
